@@ -13,7 +13,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Bot Configuration
-BOT_TOKEN = "AAHr35OWeBfuKdbnSLRq_rqAmKXytns2Z2s"  # Replace with your bot token
+BOT_TOKEN = "8383832866:AAHr35OWeBfuKdbnSLRq_rqAmKXytns2Z2s"  # Replace with your bot token
 WEB_APP_URL = "http://edu-market.onrender.com"  # Replace with your web app URL
 
 # Conversation states
