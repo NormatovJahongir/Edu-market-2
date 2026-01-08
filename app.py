@@ -343,6 +343,40 @@ def admin_dashboard():
                          recent_payments=recent_payments,
                          role=role)
 
+@app.route('/admin/add_admin', methods=['GET', 'POST'])
+@admin_required
+def add_admin():
+    # Faqat super_admin yangi admin qo'sha oladi
+    if session.get('role') != 'super_admin':
+        flash('Sizda bu amal uchun ruxsat yo\'q!', 'danger')
+        return redirect(url_for('admin_dashboard'))
+
+    if request.method == 'POST':
+        full_name = request.form.get('full_name')
+        username = request.form.get('username')
+        password = request.form.get('password')
+        # Parolni xavfsiz saqlash uchun hashlash
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('''
+                INSERT INTO users (full_name, username, password, role, status, language)
+                VALUES (?, ?, ?, 'center_admin', 'active', 'uz')
+            ''', (full_name, username, password_hash))
+            conn.commit()
+            flash(f"Admin {full_name} muvaffaqiyatli qo'shildi!", 'success')
+            return redirect(url_for('admin_dashboard'))
+        except Exception as e:
+            flash(f"Xatolik yuz berdi: Username band bo'lishi mumkin.", 'danger')
+        finally:
+            conn.close()
+
+    lang = session.get('language', 'uz')
+    return render_template('add_admin.html', t=get_translation(lang))
+    
 # ============ STUDENT DASHBOARD ============
 
 @app.route('/student/dashboard')
