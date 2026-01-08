@@ -100,7 +100,13 @@
                 
                 <div class="card-body">
                     <h3 class="center-name">{{ center.name }}</h3>
-                    <p class="center-description">{{ center.description[:100] }}...</p>
+                    <p class="center-description">
+    {% if center.description %}
+        {{ center.description[:100] }}...
+    {% else %}
+        Tavsif mavjud emas.
+    {% endif %}
+</p>
                     
                     <div class="center-info">
                         <div class="info-item">
