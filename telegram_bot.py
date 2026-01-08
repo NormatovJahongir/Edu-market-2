@@ -1,416 +1,132 @@
+import os
 import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes, ConversationHandler
-import requests
-import json
-import sqlite3
+import hashlib
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    filters,
+    ContextTypes,
+    ConversationHandler,
+)
+from database import get_db, init_db
 
-# Configure logging
+# Logging sozlamalari
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-# Bot Configuration
-BOT_TOKEN = "8383832866:AAHr35OWeBfuKdbnSLRq_rqAmKXytns2Z2s"  # Replace with your bot token
-WEB_APP_URL = "http://edu-market.onrender.com"  # Replace with your web app URL
+# Bot Tokeni (Render Environment Variable'dan olish tavsiya etiladi)
+TOKEN = "8383832866:AAHr35OWeBfuKdbnSLRq_rqAmKXytns2Z2s"
 
-# Conversation states
-LANGUAGE, REGISTER_NAME, REGISTER_PHONE, MAIN_MENU = range(4)
-
-# Multilingual texts
-TEXTS = {
-    'uz': {
-        'welcome': '🎓 EduMarket & Management System ga xush kelibsiz!\n\nTilni tanlang:',
-        'select_language': 'Tilni tanlang:',
-        'language_selected': '✅ Til o\'zbekcha qilib o\'rnatildi',
-        'enter_name': 'Iltimos, to\'liq ismingizni kiriting:',
-        'enter_phone': 'Iltimos, telefon raqamingizni kiriting yoki "Telefon yuborish" tugmasini bosing:',
-        'registration_complete': '✅ Ro\'yxatdan o\'tish muvaffaqiyatli tugallandi!\n\n👋 Xush kelibsiz, {name}!',
-        'main_menu': '📱 Asosiy menyu:\n\nKerakli bo\'limni tanlang:',
-        'search_centers': '🔍 O\'quv markazlarini qidirish',
-        'my_courses': '📚 Mening kurslarim',
-        'my_payments': '💳 To\'lovlarim',
-        'my_results': '📊 Natijalarim',
-        'settings': '⚙️ Sozlamalar',
-        'marketplace': '🏪 Bozorga o\'tish',
-        'find_on_map': '🗺 Xaritada topish',
-        'back': '◀️ Orqaga',
-        'centers_list': '📋 O\'quv markazlari ro\'yxati:',
-        'no_centers': 'Hozircha markazlar topilmadi',
-        'center_info': '''
-🏢 <b>{name}</b>
-
-⭐️ Reyting: {rating}/100
-👥 O'quvchilar: {students} ta
-📍 Manzil: {address}
-📞 Telefon: {phone}
-
-📝 {description}
-        ''',
-        'view_subjects': '📚 Fanlar',
-        'view_teachers': '👨‍🏫 O\'qituvchilar',
-        'enroll_now': '✅ Ro\'yxatdan o\'tish',
-        'share_location': '📍 Joylashuvni yuborish',
-    },
-    'ru': {
-        'welcome': '🎓 Добро пожаловать в EduMarket & Management System!\n\nВыберите язык:',
-        'select_language': 'Выберите язык:',
-        'language_selected': '✅ Язык установлен на русский',
-        'enter_name': 'Пожалуйста, введите ваше полное имя:',
-        'enter_phone': 'Пожалуйста, введите ваш номер телефона или нажмите "Отправить телефон":',
-        'registration_complete': '✅ Регистрация успешно завершена!\n\n👋 Добро пожаловать, {name}!',
-        'main_menu': '📱 Главное меню:\n\nВыберите раздел:',
-        'search_centers': '🔍 Поиск учебных центров',
-        'my_courses': '📚 Мои курсы',
-        'my_payments': '💳 Мои платежи',
-        'my_results': '📊 Мои результаты',
-        'settings': '⚙️ Настройки',
-        'marketplace': '🏪 Перейти в маркетплейс',
-        'find_on_map': '🗺 Найти на карте',
-        'back': '◀️ Назад',
-        'centers_list': '📋 Список учебных центров:',
-        'no_centers': 'Центры пока не найдены',
-        'center_info': '''
-🏢 <b>{name}</b>
-
-⭐️ Рейтинг: {rating}/100
-👥 Студентов: {students}
-📍 Адрес: {address}
-📞 Телефон: {phone}
-
-📝 {description}
-        ''',
-        'view_subjects': '📚 Предметы',
-        'view_teachers': '👨‍🏫 Учителя',
-        'enroll_now': '✅ Записаться',
-        'share_location': '📍 Отправить местоположение',
-    },
-    'en': {
-        'welcome': '🎓 Welcome to EduMarket & Management System!\n\nSelect language:',
-        'select_language': 'Select language:',
-        'language_selected': '✅ Language set to English',
-        'enter_name': 'Please enter your full name:',
-        'enter_phone': 'Please enter your phone number or tap "Send Phone":',
-        'registration_complete': '✅ Registration completed successfully!\n\n👋 Welcome, {name}!',
-        'main_menu': '📱 Main Menu:\n\nSelect an option:',
-        'search_centers': '🔍 Search Centers',
-        'my_courses': '📚 My Courses',
-        'my_payments': '💳 My Payments',
-        'my_results': '📊 My Results',
-        'settings': '⚙️ Settings',
-        'marketplace': '🏪 Go to Marketplace',
-        'find_on_map': '🗺 Find on Map',
-        'back': '◀️ Back',
-        'centers_list': '📋 Centers List:',
-        'no_centers': 'No centers found yet',
-        'center_info': '''
-🏢 <b>{name}</b>
-
-⭐️ Rating: {rating}/100
-👥 Students: {students}
-📍 Address: {address}
-📞 Phone: {phone}
-
-📝 {description}
-        ''',
-        'view_subjects': '📚 Subjects',
-        'view_teachers': '👨‍🏫 Teachers',
-        'enroll_now': '✅ Enroll Now',
-        'share_location': '📍 Share Location',
-    }
-}
-
-def get_db():
-    """Get database connection"""
-    conn = sqlite3.connect('../edumarket.db')
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def get_user_language(user_id):
-    """Get user's preferred language"""
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute('SELECT language FROM users WHERE telegram_id = ?', (str(user_id),))
-    result = cursor.fetchone()
-    conn.close()
-    return result['language'] if result else 'uz'
-
-def t(user_id, key):
-    """Get translation for user"""
-    lang = get_user_language(user_id)
-    return TEXTS.get(lang, TEXTS['uz']).get(key, key)
+# Holatlar (Conversation states)
+FULL_NAME, PHONE, LANGUAGE = range(3)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Start command handler"""
+    """Botni boshlash va foydalanuvchini tekshirish"""
     user = update.effective_user
     
-    # Check if user exists
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM users WHERE telegram_id = ?', (str(user.id),))
-    existing_user = cursor.fetchone()
+    db_user = cursor.fetchone()
     conn.close()
-    
-    if existing_user:
-        # User exists, show main menu
-        await show_main_menu(update, context)
+
+    if db_user:
+        welcome_text = {
+            'uz': f"Xush kelibsiz, {db_user['full_name']}! Saytga kirish uchun login: {db_user['username']}",
+            'ru': f"Добро пожаловать, {db_user['full_name']}! Ваш логин: {db_user['username']}",
+            'en': f"Welcome, {db_user['full_name']}! Your login: {db_user['username']}"
+        }
+        lang = db_user['language'] if db_user['language'] in welcome_text else 'uz'
+        await update.message.reply_text(welcome_text[lang])
         return ConversationHandler.END
     else:
-        # New user, start registration
-        keyboard = [
-            [
-                InlineKeyboardButton("🇺🇿 O'zbek", callback_data='lang_uz'),
-                InlineKeyboardButton("🇷🇺 Русский", callback_data='lang_ru'),
-                InlineKeyboardButton("🇬🇧 English", callback_data='lang_en')
-            ]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
         await update.message.reply_text(
-            TEXTS['uz']['welcome'],
-            reply_markup=reply_markup
+            "Assalomu alaykum! Edu Market botiga xush kelibsiz.\n"
+            "Ro'yxatdan o'tish uchun to'liq ismingizni kiriting (F.I.O):"
         )
-        return LANGUAGE
+        return FULL_NAME
 
-async def language_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle language selection"""
-    query = update.callback_query
-    await query.answer()
-    
-    lang = query.data.split('_')[1]
-    context.user_data['language'] = lang
-    
-    await query.edit_message_text(
-        text=TEXTS[lang]['language_selected']
-    )
-    
-    await query.message.reply_text(
-        TEXTS[lang]['enter_name']
-    )
-    
-    return REGISTER_NAME
-
-async def register_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle name registration"""
+async def get_full_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Ismni saqlash"""
     context.user_data['full_name'] = update.message.text
-    lang = context.user_data.get('language', 'uz')
+    await update.message.reply_text("Telefon raqamingizni yuboring (masalan: +998901234567):")
+    return PHONE
+
+async def get_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Telefonni saqlash va tilni so'rash"""
+    context.user_data['phone'] = update.message.text
     
-    # Request phone number
-    keyboard = [
-        [KeyboardButton(text="📱 Telefon yuborish", request_contact=True)]
-    ]
-    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-    
+    reply_keyboard = [['O\'zbekcha', 'Русский', 'English']]
     await update.message.reply_text(
-        TEXTS[lang]['enter_phone'],
-        reply_markup=reply_markup
+        "Muloqot tilini tanlang:",
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True),
     )
-    
-    return REGISTER_PHONE
+    return LANGUAGE
 
-async def register_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle phone registration"""
+async def get_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Ma'lumotlarni bazaga saqlash va tugatish"""
+    lang_map = {'O\'zbekcha': 'uz', 'Русский': 'ru', 'English': 'en'}
+    selected_lang = lang_map.get(update.message.text, 'uz')
+    
     user = update.effective_user
-    lang = context.user_data.get('language', 'uz')
+    full_name = context.user_data['full_name']
+    phone = context.user_data['phone']
+    # Username sifatida telegram id yoki random nom (saytga kirish uchun)
+    username = f"user_{user.id}"
     
-    if update.message.contact:
-        phone = update.message.contact.phone_number
-    else:
-        phone = update.message.text
-    
-    # Save user to database
-    data = {
-        'telegram_id': str(user.id),
-        'full_name': context.user_data['full_name'],
-        'phone': phone,
-        'language': lang
-    }
-    
+    conn = get_db()
+    cursor = conn.cursor()
     try:
-        response = requests.post(f'{WEB_APP_URL}/api/user/register', json=data)
+        cursor.execute('''
+            INSERT INTO users (telegram_id, username, full_name, phone, language, role, status)
+            VALUES (?, ?, ?, ?, ?, 'student', 'active')
+        ''', (str(user.id), username, full_name, phone, selected_lang))
+        conn.commit()
         
-        if response.status_code == 200:
-            await update.message.reply_text(
-                TEXTS[lang]['registration_complete'].format(name=data['full_name'])
-            )
-            await show_main_menu(update, context)
-            return ConversationHandler.END
-        else:
-            await update.message.reply_text("❌ Xatolik yuz berdi. Qayta urinib ko'ring.")
-            return REGISTER_PHONE
+        success_text = {
+            'uz': f"Muvaffaqiyatli ro'yxatdan o'tdingiz!\nLogin: {username}\nSaytda kurslarni ko'rishingiz mumkin.",
+            'ru': f"Вы успешно зарегистрировались!\nЛогин: {username}",
+            'en': f"Success! Your login: {username}"
+        }
+        await update.message.reply_text(success_text[selected_lang], reply_markup=ReplyKeyboardRemove())
     except Exception as e:
-        logger.error(f"Registration error: {e}")
-        await update.message.reply_text("❌ Xatolik yuz berdi. Qayta urinib ko'ring.")
-        return REGISTER_PHONE
+        logger.error(f"Xatolik: {e}")
+        await update.message.reply_text("Xatolik yuz berdi. Qaytadan urinib ko'ring.")
+    finally:
+        conn.close()
 
-async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show main menu"""
-    user_id = update.effective_user.id
-    
-    keyboard = [
-        [
-            InlineKeyboardButton(t(user_id, 'search_centers'), callback_data='search_centers'),
-        ],
-        [
-            InlineKeyboardButton(t(user_id, 'my_courses'), callback_data='my_courses'),
-            InlineKeyboardButton(t(user_id, 'my_payments'), callback_data='my_payments'),
-        ],
-        [
-            InlineKeyboardButton(t(user_id, 'my_results'), callback_data='my_results'),
-            InlineKeyboardButton(t(user_id, 'settings'), callback_data='settings'),
-        ],
-        [
-            InlineKeyboardButton(
-                t(user_id, 'marketplace'), 
-                web_app=WebAppInfo(url=WEB_APP_URL)
-            ),
-        ],
-        [
-            InlineKeyboardButton(
-                t(user_id, 'find_on_map'), 
-                web_app=WebAppInfo(url=f"{WEB_APP_URL}/map")
-            ),
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    text = t(user_id, 'main_menu')
-    
-    if update.callback_query:
-        await update.callback_query.message.reply_text(text, reply_markup=reply_markup)
-    else:
-        await update.message.reply_text(text, reply_markup=reply_markup)
-
-async def search_centers(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Search and display centers"""
-    query = update.callback_query
-    await query.answer()
-    
-    user_id = update.effective_user.id
-    
-    try:
-        response = requests.get(f'{WEB_APP_URL}/api/centers')
-        centers = response.json()
-        
-        if not centers:
-            await query.message.reply_text(t(user_id, 'no_centers'))
-            return
-        
-        text = t(user_id, 'centers_list') + '\n\n'
-        keyboard = []
-        
-        for center in centers[:10]:  # Show top 10
-            keyboard.append([
-                InlineKeyboardButton(
-                    f"⭐️ {center['rating']:.1f} - {center['name']}", 
-                    callback_data=f"center_{center['id']}"
-                )
-            ])
-        
-        keyboard.append([InlineKeyboardButton(t(user_id, 'back'), callback_data='main_menu')])
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        await query.message.reply_text(text, reply_markup=reply_markup)
-        
-    except Exception as e:
-        logger.error(f"Error fetching centers: {e}")
-        await query.message.reply_text("❌ Xatolik yuz berdi.")
-
-async def show_center_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show center details"""
-    query = update.callback_query
-    await query.answer()
-    
-    user_id = update.effective_user.id
-    center_id = query.data.split('_')[1]
-    
-    try:
-        response = requests.get(f'{WEB_APP_URL}/api/center/{center_id}')
-        data = response.json()
-        
-        center = data['center']
-        
-        text = t(user_id, 'center_info').format(
-            name=center['name'],
-            rating=center['rating'],
-            students=center['student_count'],
-            address=center['address'] or 'N/A',
-            phone=center['phone'] or 'N/A',
-            description=center['description'] or ''
-        )
-        
-        keyboard = [
-            [
-                InlineKeyboardButton(t(user_id, 'view_subjects'), callback_data=f'subjects_{center_id}'),
-                InlineKeyboardButton(t(user_id, 'view_teachers'), callback_data=f'teachers_{center_id}'),
-            ],
-            [
-                InlineKeyboardButton(t(user_id, 'enroll_now'), callback_data=f'enroll_{center_id}'),
-            ],
-            [
-                InlineKeyboardButton(t(user_id, 'back'), callback_data='search_centers'),
-            ]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        await query.message.reply_text(text, reply_markup=reply_markup, parse_mode='HTML')
-        
-    except Exception as e:
-        logger.error(f"Error fetching center details: {e}")
-        await query.message.reply_text("❌ Xatolik yuz berdi.")
-
-async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle all button callbacks"""
-    query = update.callback_query
-    await query.answer()
-    
-    data = query.data
-    
-    if data == 'main_menu':
-        await show_main_menu(update, context)
-    elif data == 'search_centers':
-        await search_centers(update, context)
-    elif data.startswith('center_'):
-        await show_center_detail(update, context)
-    elif data == 'my_courses':
-        await query.message.reply_text("📚 Sizning kurslaringiz: (Coming soon...)")
-    elif data == 'my_payments':
-        await query.message.reply_text("💳 Sizning to'lovlaringiz: (Coming soon...)")
-    elif data == 'my_results':
-        await query.message.reply_text("📊 Sizning natijalaringiz: (Coming soon...)")
-    elif data == 'settings':
-        await query.message.reply_text("⚙️ Sozlamalar: (Coming soon...)")
+    return ConversationHandler.END
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Cancel conversation"""
-    await update.message.reply_text('❌ Bekor qilindi.')
+    await update.message.reply_text("Amal bekor qilindi.", reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
-    
-from database import init_db
 
 def main():
-    """Start the bot"""
-    application = Application.builder().token(BOT_TOKEN).build()
-    
-    # Conversation handler for registration
+    """Botni ishga tushirish (bu funksiya app.py dan chaqiriladi)"""
+    # Bazani tekshirish
+    init_db()
+
+    application = Application.builder().token(TOKEN).build()
+
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            LANGUAGE: [CallbackQueryHandler(language_callback, pattern='^lang_')],
-            REGISTER_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, register_name)],
-            REGISTER_PHONE: [MessageHandler((filters.TEXT | filters.CONTACT) & ~filters.COMMAND, register_phone)],
+            FULL_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_full_name)],
+            PHONE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_phone)],
+            LANGUAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_language)],
         },
         fallbacks=[CommandHandler('cancel', cancel)],
     )
-    
+
     application.add_handler(conv_handler)
-    application.add_handler(CallbackQueryHandler(button_callback))
     
-    # Start the bot
-    logger.info("Bot started...")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    # Render'da bot polling rejimida ishlaydi
+    print("Bot pollingni boshladi...")
+    application.run_polling()
 
 if __name__ == '__main__':
     main()
