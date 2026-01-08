@@ -4,6 +4,13 @@
 
 {% block content %}
 <div class="dashboard-container">
+    {% if session.get('role') == 'super_admin' %}
+    <div class="mb-4">
+        <a href="{{ url_for('add_admin') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Yangi Admin Qo'shish
+        </a>
+    </div>
+{% endif %}
     <!-- Sidebar -->
     <aside class="dashboard-sidebar">
         <div class="sidebar-header">
