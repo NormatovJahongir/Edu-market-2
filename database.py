@@ -3,7 +3,8 @@ from datetime import datetime
 import hashlib
 import os
 
-DATABASE =os.environ.get('DATABASE_PATH', 'edumarket.db')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, 'edu_market.db')
 
 def get_db():
     """Get database connection"""
