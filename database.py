@@ -1,16 +1,17 @@
 import sqlite3
 import os
+import hashlib
 from datetime import datetime
 
 # 1. Loyiha papkasini va baza yo'lini aniq belgilaymiz
-# Bu Flask va Bot bitta bazaga murojaat qilishini ta'minlaydi
+# Bu Flask va Bot bitta bazaga (edu_market.db) murojaat qilishini ta'minlaydi
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'edu_market.db')
 
 def get_db():
     """Ma'lumotlar bazasiga ulanish yaratish"""
     conn = sqlite3.connect(DB_PATH)
-    # Natijalarni index emas, ustun nomi bilan olish uchun (masalan: user['username'])
+    # Natijalarni ustun nomi bilan olish uchun (masalan: user['username'])
     conn.row_factory = sqlite3.Row
     # SQLite'da Foreign Key (tashqi kalit) cheklovlarini yoqish
     conn.execute("PRAGMA foreign_keys = ON")
@@ -21,7 +22,7 @@ def init_db():
     conn = get_db()
     cursor = conn.cursor()
 
-    # --- USERS JADVALI ---
+    # --- 1. USERS JADVALI ---
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,7 +37,7 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
 
-    # --- CENTERS JADVALI ---
+    # --- 2. CENTERS JADVALI ---
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS centers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,7 +55,7 @@ def init_db():
         FOREIGN KEY (admin_id) REFERENCES users (id) ON DELETE SET NULL
     )''')
 
-    # --- SUBJECTS JADVALI ---
+    # --- 3. SUBJECTS JADVALI ---
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS subjects (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,7 +67,7 @@ def init_db():
         FOREIGN KEY (center_id) REFERENCES centers (id) ON DELETE CASCADE
     )''')
 
-    # --- TEACHERS JADVALI ---
+    # --- 4. TEACHERS JADVALI ---
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS teachers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,7 +82,7 @@ def init_db():
         FOREIGN KEY (subject_id) REFERENCES subjects (id) ON DELETE SET NULL
     )''')
 
-    # --- ENROLLMENTS (Ro'yxatdan o'tishlar) ---
+    # --- 5. ENROLLMENTS (Kursga yozilishlar) ---
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS enrollments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,7 +98,7 @@ def init_db():
         FOREIGN KEY (teacher_id) REFERENCES teachers (id)
     )''')
 
-    # --- PAYMENTS (To'lovlar) ---
+    # --- 6. PAYMENTS (To'lovlar) ---
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS payments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -111,32 +112,7 @@ def init_db():
         FOREIGN KEY (center_id) REFERENCES centers (id)
     )''')
 
-    # --- ATTENDANCE (Davomat) ---
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS attendance (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        student_id INTEGER,
-        subject_id INTEGER,
-        date TEXT DEFAULT CURRENT_DATE,
-        status TEXT, -- 'present', 'absent'
-        FOREIGN KEY (student_id) REFERENCES users (id),
-        FOREIGN KEY (subject_id) REFERENCES subjects (id)
-    )''')
-
-    # --- RESULTS (Natijalar) ---
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS results (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        student_id INTEGER,
-        subject_id INTEGER,
-        score REAL,
-        test_date TEXT,
-        comment TEXT,
-        FOREIGN KEY (student_id) REFERENCES users (id),
-        FOREIGN KEY (subject_id) REFERENCES subjects (id)
-    )''')
-
-    # --- REVIEWS (Fikrlar) ---
+    # --- 7. REVIEWS (Fikrlar) ---
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS reviews (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -150,9 +126,20 @@ def init_db():
         FOREIGN KEY (center_id) REFERENCES centers (id)
     )''')
 
+    # --- SUPER ADMINNI AVTOMATIK YARATISH ---
+    # Bu qism baza har safar yangilanganda adminingiz o'chib ketmasligini ta'minlaydi
+    admin_username = 'admin'
+    admin_password = 'admin123'
+    password_hash = hashlib.sha256(admin_password.encode()).hexdigest()
+
+    cursor.execute('''
+        INSERT OR IGNORE INTO users (full_name, username, password, role, status, language)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', ('Bosh Admin', admin_username, password_hash, 'super_admin', 'active', 'uz'))
+
     conn.commit()
     conn.close()
-    print(f"Baza muvaffaqiyatli initsializatsiya qilindi: {DB_PATH}")
+    print(f"Baza va Super Admin muvaffaqiyatli tayyorlandi: {DB_PATH}")
 
 def calculate_center_rating(center_id):
     """Markaz reytingini fikrlar asosida qayta hisoblash"""
