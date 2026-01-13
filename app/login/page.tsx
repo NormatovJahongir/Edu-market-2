@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { 
-  GraduationCap, ChartLine, Users, MobileAlt, 
+  GraduationCap, LineChart, Users, Smartphone, // ChartLine -> LineChart, MobileAlt -> Smartphone
   User, Lock, LogIn, Send, ArrowLeft 
 } from 'lucide-react';
 import Link from 'next/link';
@@ -13,12 +13,12 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    // Login mantiqini shu yerda bajarasiz (API ga yuborish)
+    // Login mantiqi kelajakda shu yerda bo'ladi
     setTimeout(() => setLoading(false), 2000); 
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 font-sans">
       <div className="max-w-5xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[600px]">
         
         {/* Chap tomon: Xususiyatlar */}
@@ -32,7 +32,7 @@ export default function LoginPage() {
 
             <div className="space-y-8">
               <FeatureItem 
-                icon={ChartLine} 
+                icon={LineChart} 
                 title="Analitika va hisobotlar" 
                 desc="O'quvchilar va o'qituvchilar statistikasi" 
               />
@@ -42,9 +42,9 @@ export default function LoginPage() {
                 desc="O'quvchilar va to'lovlarni boshqarish" 
               />
               <FeatureItem 
-                icon={MobileAlt} 
+                icon={Smartphone} 
                 title="Telegram Bot" 
-                desc="Mobil ilovada ishlash imkoniyati" 
+                desc="Mobil qurilmalarda ishlash imkoniyati" 
               />
             </div>
           </div>
@@ -68,7 +68,7 @@ export default function LoginPage() {
                 <input 
                   type="text" 
                   name="username"
-                  className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition bg-gray-50"
+                  className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition bg-gray-50 text-gray-900"
                   placeholder="Username kiriting"
                   required
                 />
@@ -81,7 +81,7 @@ export default function LoginPage() {
                 <input 
                   type="password" 
                   name="password"
-                  className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition bg-gray-50"
+                  className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition bg-gray-50 text-gray-900"
                   placeholder="Parol kiriting"
                   required
                 />
@@ -103,6 +103,8 @@ export default function LoginPage() {
 
             <a 
               href="https://t.me/edu_market_biznes_bot" 
+              target="_blank"
+              rel="noopener noreferrer"
               className="w-full border border-blue-500 text-blue-600 py-3 rounded-xl font-bold hover:bg-blue-50 transition flex items-center justify-center gap-2 mb-8"
             >
               <Send size={18} className="fill-current" /> Telegram orqali kirish
@@ -123,11 +125,10 @@ export default function LoginPage() {
   );
 }
 
-// Yordamchi komponent
 function FeatureItem({ icon: Icon, title, desc }: any) {
   return (
     <div className="flex gap-4 group">
-      <div className="bg-white/10 p-3 rounded-2xl group-hover:bg-white/20 transition">
+      <div className="bg-white/10 p-3 rounded-2xl group-hover:bg-white/20 transition shrink-0">
         <Icon size={24} />
       </div>
       <div>
