@@ -3,18 +3,18 @@
 import React from 'react';
 import { 
   UserCircle, BookOpen, CalendarCheck, 
-  ChartLine, Wallet, School, UserTie, 
-  Calendar, Check, X, Clock, ChevronRight,
-  GraduationCap, Info
+  TrendingUp, Wallet, School, Users, // ChartLine -> TrendingUp, UserTie -> Users
+  Calendar, Check, X, ChevronRight,
+  GraduationCap
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function StudentDashboard() {
-  // Mock data - bular API orqali keladi
+  // Mock data
   const stats = [
     { label: "Faol kurslar", value: "3", icon: BookOpen, color: "text-blue-600", bg: "bg-blue-50" },
     { label: "Qatnashgan darslar", value: "42", icon: CalendarCheck, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "O'rtacha natija", value: "85%", icon: ChartLine, color: "text-purple-600", bg: "bg-purple-50" },
+    { label: "O'rtacha natija", value: "85%", icon: TrendingUp, color: "text-purple-600", bg: "bg-purple-50" },
     { label: "To'lovlar kutilmoqda", value: "1", icon: Wallet, color: "text-orange-600", bg: "bg-orange-50" },
   ];
 
@@ -52,7 +52,6 @@ export default function StudentDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Courses & Attendance */}
         <div className="lg:col-span-2 space-y-8">
-          {/* My Courses Section */}
           <section className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold flex items-center gap-2">
@@ -78,7 +77,6 @@ export default function StudentDashboard() {
             </div>
           </section>
 
-          {/* Attendance Tracker */}
           <section className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
             <h2 className="text-xl font-bold flex items-center gap-2 mb-6">
               <Calendar className="text-blue-600" /> Davomat (Oxirgi 10 dars)
@@ -96,11 +94,10 @@ export default function StudentDashboard() {
 
         {/* Right Column: Results & Payments */}
         <div className="space-y-8">
-          {/* Results Section */}
           <section className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold flex items-center gap-2">
-                <ChartLine className="text-purple-600" size={20} /> Natijalar
+                <TrendingUp className="text-purple-600" size={20} /> Natijalar
               </h2>
             </div>
             <div className="space-y-4">
@@ -110,7 +107,6 @@ export default function StudentDashboard() {
             </div>
           </section>
 
-          {/* Payments Section */}
           <section className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
             <h2 className="text-xl font-bold flex items-center gap-2 mb-6">
               <Wallet className="text-orange-600" size={20} /> To'lovlar
@@ -126,7 +122,6 @@ export default function StudentDashboard() {
   );
 }
 
-// Sub-components for cleaner code
 function CourseCard({ title, center, teacher, status, date }: any) {
   return (
     <div className="p-5 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all group">
@@ -138,35 +133,12 @@ function CourseCard({ title, center, teacher, status, date }: any) {
       </div>
       <div className="space-y-1.5 mb-4">
         <p className="text-xs text-gray-500 flex items-center gap-1.5"><School size={12} /> {center}</p>
-        <p className="text-xs text-gray-500 flex items-center gap-1.5"><UserTie size={12} /> {teacher}</p>
+        <p className="text-xs text-gray-500 flex items-center gap-1.5"><Users size={12} /> {teacher}</p>
       </div>
       <div className="flex items-center justify-between pt-3 border-t">
         <span className="text-[10px] text-gray-400 flex items-center gap-1"><Calendar size={10} /> {date}</span>
         <button className="text-xs font-bold text-blue-600 flex items-center gap-1">Batafsil <ChevronRight size={14} /></button>
       </div>
-    </div>
-  );
-}
-
-function ResultItem({ name, score }: any) {
-  return (
-    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-      <div className="text-sm font-medium text-gray-700">{name}</div>
-      <div className={`font-bold ${score >= 80 ? 'text-emerald-600' : score >= 70 ? 'text-blue-600' : 'text-orange-600'}`}>
-        {score}%
-      </div>
-    </div>
-  );
-}
-
-function PaymentItem({ center, amount, status, color }: any) {
-  return (
-    <div className="flex items-center justify-between p-3 border-b border-dashed last:border-0">
-      <div>
-        <div className="text-sm font-bold text-gray-800">{center}</div>
-        <div className="text-[10px] text-gray-400">{amount} so'm</div>
-      </div>
-      <div className={`text-xs font-bold ${color}`}>{status}</div>
     </div>
   );
 }
