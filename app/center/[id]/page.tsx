@@ -1,22 +1,19 @@
 "use client";
 
 import React from 'react';
-import Link from 'next/link';
 import { 
   GraduationCap, Star, Users, BookOpen, Info, 
-  Briefcase, MapPin, Phone, Mail, Globe, 
-  UserPlus, MessageSquare, ChevronRight 
+  MapPin, Phone, Mail, UserPlus, MessageSquare 
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 
-// Agar components papkasi app ichida bo'lsa:
-const CenterMapClient = dynamic(() => import('CenterMapClient'), { 
-  ssr: false,
-  loading: () => <div className="h-[300px] w-full bg-gray-100 animate-pulse rounded-2xl" />
-});
+// Xaritani vaqtincha o'chirib turamiz (Build muammosini hal qilish uchun)
+// import dynamic from 'next/dynamic';
+// const CenterMapClient = dynamic(() => import('@/components/CenterMapClient'), { 
+//   ssr: false,
+//   loading: () => <div className="h-[300px] w-full bg-gray-100 animate-pulse rounded-2xl" />
+// });
 
 export default function CenterDetailPage({ params }: { params: { id: string } }) {
-  // Bu ma'lumotlar keyinchalik API orqali params.id ga qarab keladi
   const center = {
     name: "Zehn Akademiyasi",
     rating: 4.8,
@@ -61,10 +58,7 @@ export default function CenterDetailPage({ params }: { params: { id: string } })
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content (Left) */}
         <div className="lg:col-span-2 space-y-10">
-          
-          {/* About */}
           <section>
             <h2 className="text-2xl font-bold flex items-center gap-2 mb-4">
               <Info className="text-blue-600" /> Markaz haqida
@@ -74,7 +68,6 @@ export default function CenterDetailPage({ params }: { params: { id: string } })
             </p>
           </section>
 
-          {/* Subjects */}
           <section>
             <h2 className="text-2xl font-bold flex items-center gap-2 mb-6">
               <BookOpen className="text-blue-600" /> Fanlar va Kurslar
@@ -95,7 +88,6 @@ export default function CenterDetailPage({ params }: { params: { id: string } })
             </div>
           </section>
 
-          {/* Reviews (Mockup) */}
           <section>
             <h2 className="text-2xl font-bold flex items-center gap-2 mb-6">
               <MessageSquare className="text-blue-600" /> Sharhlar
@@ -114,9 +106,7 @@ export default function CenterDetailPage({ params }: { params: { id: string } })
           </section>
         </div>
 
-        {/* Sidebar (Right) */}
         <div className="space-y-6">
-          {/* Contact Card */}
           <div className="bg-white p-6 rounded-2xl border shadow-sm sticky top-24">
             <h3 className="text-lg font-bold mb-4">Aloqa va Manzil</h3>
             <div className="space-y-4 text-sm">
@@ -135,9 +125,8 @@ export default function CenterDetailPage({ params }: { params: { id: string } })
             </div>
 
             <div className="mt-6 h-48 rounded-xl overflow-hidden border">
-                {/* Bu yerda kichik xarita chiqadi */}
                 <div className="bg-gray-100 h-full flex items-center justify-center text-gray-400">
-                    Xarita yuklanmoqda...
+                    Xarita vaqtincha o'chirilgan...
                 </div>
             </div>
 
@@ -149,11 +138,4 @@ export default function CenterDetailPage({ params }: { params: { id: string } })
       </div>
     </div>
   );
-
 }
-
-
-
-
-
-
