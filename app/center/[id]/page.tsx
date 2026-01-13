@@ -9,10 +9,10 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
-// Xaritani faqat brauzerda yuklash uchun (SSR xatosi bermasligi uchun)
-const MapWithNoSSR = dynamic(() => import('@/components/CenterMapClient'), { 
+// Xaritani dinamik yuklash (SSR'ni o'chirish shart!)
+const CenterMapClient = dynamic(() => import('../../components/CenterMapClient'), { 
   ssr: false,
-  loading: () => <div className="h-[200px] bg-gray-100 animate-pulse rounded-lg" />
+  loading: () => <div className="h-[300px] w-full bg-gray-100 animate-pulse rounded-2xl" />
 });
 
 export default function CenterDetailPage({ params }: { params: { id: string } }) {
@@ -149,4 +149,5 @@ export default function CenterDetailPage({ params }: { params: { id: string } })
       </div>
     </div>
   );
+
 }
