@@ -9,8 +9,8 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
-// Xaritani dinamik yuklash (SSR'ni o'chirish shart!)
-const CenterMapClient = dynamic(() => import('../../components/CenterMapClient'), { 
+// @/ aliasi endi tsconfig orqali ishlaydi
+const CenterMapClient = dynamic(() => import('@/components/CenterMapClient'), { 
   ssr: false,
   loading: () => <div className="h-[300px] w-full bg-gray-100 animate-pulse rounded-2xl" />
 });
@@ -151,3 +151,4 @@ export default function CenterDetailPage({ params }: { params: { id: string } })
   );
 
 }
+
