@@ -114,7 +114,7 @@ export default function CenterAdminPage({ params }: { params: { id: string } }) 
         <div className="p-8 border-b border-slate-700">
           <div className="flex items-center gap-3 mb-6">
             <div className="bg-blue-600 p-2 rounded-xl"><School size={24} /></div>
-            <span className="text-xl font-black tracking-tighter">EduMarket</span>
+            <span className="text-xl font-black tracking-tighter">Zehn.uz</span>
           </div>
           <div className="space-y-1">
             <SidebarLink icon={ShoppingBag} label="Marketplace" active={activeTab === 'marketplace'} onClick={() => setActiveTab('marketplace')} />
