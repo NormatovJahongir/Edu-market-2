@@ -81,7 +81,7 @@ export default function RegisterCenter() {
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-4 shadow-lg shadow-blue-200">
             <LayoutGrid size={32} />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">EduMarket</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Zehn.uz</h1>
           <p className="text-gray-500 mt-1 italic text-sm">Markazni ro'yxatdan o'tkazish</p>
         </div>
 
