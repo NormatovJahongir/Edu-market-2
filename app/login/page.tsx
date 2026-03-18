@@ -65,7 +65,7 @@ export default function LoginPage() {
           <div>
             <div className="flex items-center gap-3 mb-8">
               <GraduationCap size={40} className="text-blue-200" />
-              <h1 className="text-3xl font-bold tracking-tight">EduMarket</h1>
+              <h1 className="text-3xl font-bold tracking-tight">Zehn.uz</h1>
             </div>
             <p className="text-blue-100 text-lg mb-12">O'quv markazlari boshqaruv tizimi</p>
 
