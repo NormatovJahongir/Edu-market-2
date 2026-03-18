@@ -123,7 +123,7 @@ export default function MarketplacePage() {
             <MapIcon className="text-blue-600" size={36} /> {t.viewMap}
           </h2>
           <div className="bg-blue-50 text-blue-600 px-6 py-2.5 rounded-2xl font-black text-sm uppercase border border-blue-100">
-            Toshkent
+            Uzbekiston
           </div>
         </div>
         <div className="rounded-[3.5rem] overflow-hidden border-[16px] border-white shadow-2xl h-[550px]">
