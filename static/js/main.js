@@ -342,4 +342,4 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-console.log('EduMarket System loaded successfully! 🎓');
+console.log('Zehn.uz System loaded successfully! 🎓');
